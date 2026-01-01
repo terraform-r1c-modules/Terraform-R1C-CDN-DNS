@@ -4,10 +4,10 @@ Terraform module to manage ArvanCloud CDN DNS records with support for all recor
 
 ## Requirements
 
-| Name       | Version  |
-| ---------- | -------- |
-| terraform  | >= 1.5   |
-| arvancloud | >= 0.2.2 |
+| Name                                                                             | Version  |
+| -------------------------------------------------------------------------------- | -------- |
+| [terraform](https://developer.hashicorp.com/terraform)                           | >= 1.5   |
+| [arvancloud](https://git.arvancloud.ir/arvancloud/terraform-provider-arvancloud) | >= 0.2.2 |
 
 ## Usage
 
