@@ -19,7 +19,7 @@ Terraform module to manage ArvanCloud CDN DNS records with support for all recor
 
 ```hcl
 module "dns" {
-  source = "path/to/module"
+  source = "git@github.com:terraform-r1c-modules/Terraform-R1C-DNS.git?ref=main"
 
   domain = "example.ir"
 
@@ -49,7 +49,7 @@ module "dns" {
 
 ```hcl
 module "dns" {
-  source = "path/to/module"
+  source = "git@github.com:terraform-r1c-modules/Terraform-R1C-DNS.git?ref=main"
 
   domain = "example.ir"
 
