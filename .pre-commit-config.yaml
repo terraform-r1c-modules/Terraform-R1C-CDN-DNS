@@ -4,6 +4,12 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_wrapper_module_for_each
+        args:
+          - --args=--module-dir=.
+          - --args=--module-repo-org=terraform-r1c-modules
+          - --args=--module-repo-provider=r1c
+          - --args=--module-repo-shortname=dns
+          - --args=--verbose
       - id: terraform_docs
         args:
           - "--args=--lockfile=false"
