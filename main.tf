@@ -9,20 +9,28 @@ locals {
   default_upstream_https = "default"
   default_ttl            = 120
 
-  # Categorize records by type for efficient processing
-  a_records     = { for record in var.records : record.name => record if record.type == "a" }
-  aaaa_records  = { for record in var.records : record.name => record if record.type == "aaaa" }
-  aname_records = { for record in var.records : record.name => record if record.type == "aname" }
-  caa_records   = { for record in var.records : record.name => record if record.type == "caa" }
-  cname_records = { for record in var.records : record.name => record if record.type == "cname" }
-  dkim_records  = { for record in var.records : record.name => record if record.type == "dkim" }
-  mx_records    = { for record in var.records : record.name => record if record.type == "mx" }
-  ns_records    = { for record in var.records : record.name => record if record.type == "ns" }
-  ptr_records   = { for record in var.records : record.name => record if record.type == "ptr" }
-  spf_records   = { for record in var.records : record.name => record if record.type == "spf" }
-  srv_records   = { for record in var.records : record.name => record if record.type == "srv" }
-  tlsa_records  = { for record in var.records : record.name => record if record.type == "tlsa" }
-  txt_records   = { for record in var.records : record.name => record if record.type == "txt" }
+  # Create indexed records list with unique keys
+  # Key format: {name}_{type}_{index} to handle duplicates
+  indexed_records = [
+    for idx, record in var.records : merge(record, {
+      unique_key = record.key != null ? record.key : "${record.name}_${record.type}_${idx}"
+    })
+  ]
+
+  # Categorize records by type for efficient processing (using unique keys)
+  a_records     = { for record in local.indexed_records : record.unique_key => record if record.type == "a" }
+  aaaa_records  = { for record in local.indexed_records : record.unique_key => record if record.type == "aaaa" }
+  aname_records = { for record in local.indexed_records : record.unique_key => record if record.type == "aname" }
+  caa_records   = { for record in local.indexed_records : record.unique_key => record if record.type == "caa" }
+  cname_records = { for record in local.indexed_records : record.unique_key => record if record.type == "cname" }
+  dkim_records  = { for record in local.indexed_records : record.unique_key => record if record.type == "dkim" }
+  mx_records    = { for record in local.indexed_records : record.unique_key => record if record.type == "mx" }
+  ns_records    = { for record in local.indexed_records : record.unique_key => record if record.type == "ns" }
+  ptr_records   = { for record in local.indexed_records : record.unique_key => record if record.type == "ptr" }
+  spf_records   = { for record in local.indexed_records : record.unique_key => record if record.type == "spf" }
+  srv_records   = { for record in local.indexed_records : record.unique_key => record if record.type == "srv" }
+  tlsa_records  = { for record in local.indexed_records : record.unique_key => record if record.type == "tlsa" }
+  txt_records   = { for record in local.indexed_records : record.unique_key => record if record.type == "txt" }
 }
 
 # =============================================================================

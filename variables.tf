@@ -41,6 +41,10 @@ variable "records" {
     name = string
     type = string
 
+    # Optional unique key for records with duplicate names (e.g., multiple @ TXT records)
+    # If not provided, a unique key will be auto-generated as: {name}_{type}_{index}
+    key = optional(string)
+
     # Optional fields with defaults
     ttl            = optional(number)
     cloud          = optional(bool)

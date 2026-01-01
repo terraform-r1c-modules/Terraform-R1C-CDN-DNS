@@ -221,11 +221,46 @@ module "dns" {
 | -------------- | -------------------------------------------------------------------------------- | -------- | ------------------------------------------------ | :------: |
 | name           | The name of the record                                                           | `string` | n/a                                              |   yes    |
 | type           | Record type (a, aaaa, aname, caa, cname, dkim, mx, ns, ptr, spf, srv, tlsa, txt) | `string` | n/a                                              |   yes    |
+| key            | Unique identifier for duplicate name records (auto-generated if not provided)    | `string` | `{name}_{type}_{index}`                          |    no    |
 | ttl            | Time to live in seconds (60-86400)                                               | `number` | `120`                                            |    no    |
 | cloud          | Whether record is managed by ArvanCloud CDN                                      | `bool`   | `true` for A/AAAA/CNAME/ANAME, `false` otherwise |    no    |
 | upstream_https | HTTPS config: default, auto, http, https                                         | `string` | `"default"`                                      |    no    |
 | ip_filter_mode | IP filtering configuration                                                       | `object` | See below                                        |    no    |
 | value          | Record value object (varies by type)                                             | `object` | n/a                                              |   yes    |
+
+### Handling Duplicate Record Names
+
+When you have multiple records with the same name (e.g., multiple MX or TXT records at `@`), the module automatically generates unique keys. You can also provide custom keys using the `key` field:
+
+```hcl
+records = [
+  # Multiple MX records with same name - auto-generated keys
+  {
+    name = "@"
+    type = "mx"
+    value = { mx = { host = "mx1.example.com.", priority = 10 } }
+  },
+  {
+    name = "@"
+    type = "mx"
+    value = { mx = { host = "mx2.example.com.", priority = 20 } }
+  },
+
+  # Multiple TXT records with custom keys for better identification
+  {
+    name = "@"
+    type = "txt"
+    key  = "spf-record"
+    value = { txt = { text = "v=spf1 include:example.com ~all" } }
+  },
+  {
+    name = "@"
+    type = "txt"
+    key  = "google-verification"
+    value = { txt = { text = "google-site-verification=abc123" } }
+  }
+]
+```
 
 ### IP Filter Mode
 
