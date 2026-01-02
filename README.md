@@ -1,4 +1,4 @@
-# Terraform ArvanCloud DNS Module
+# ArvanCloud CDN DNS Terraform Module
 
 ![Terraform](https://img.shields.io/badge/Terraform-%3E%3D1.5-623CE4?logo=terraform)
 ![Version](https://img.shields.io/github/v/release/terraform-r1c-modules/terraform-r1c-cdn-dns?logo=github&color=red&label=Version)
