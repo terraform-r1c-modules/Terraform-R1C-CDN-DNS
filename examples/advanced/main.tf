@@ -44,7 +44,7 @@ locals {
 # =============================================================================
 
 module "dns" {
-  source = "git@github.com:terraform-r1c-modules/Terraform-R1C-DNS.git?ref=v1.0.1"
+  source = "../../"
 
   domain = var.domain
 
