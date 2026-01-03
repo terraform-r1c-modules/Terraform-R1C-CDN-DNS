@@ -1,5 +1,5 @@
 # Local .terraform directories
-**/.terraform/*
+.terraform/
 
 # .tfstate files
 *.tfstate
@@ -23,12 +23,39 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+
 # Include override files you do wish to add to version control using negated pattern
 # !example_override.tf
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
+*.tfplan
 
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore lock files (regenerated on init)
+.terraform.lock.hcl
+
+# IDE and editors
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Local development
+.env
+.env.local
+*.local
+
+# Secrets (never commit these!)
+*.pem
+*.key
