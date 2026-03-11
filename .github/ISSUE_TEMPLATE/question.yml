@@ -53,7 +53,7 @@ body:
       description: Share any relevant Terraform configuration.
       render: hcl
       placeholder: |
-        module "cdn_load_balancer" {
+        module "cdn_dns" {
           source = "..."
         }
     validations:
