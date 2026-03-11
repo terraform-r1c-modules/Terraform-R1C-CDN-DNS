@@ -232,6 +232,9 @@ module "cdn_dns" {
 | `ip_filter_mode` | IP filtering configuration                                                       | `object` | See below                                        |    No    |
 | `value`          | Record value object (varies by type)                                             | `object` | n/a                                              |   Yes    |
 
+> [!WARNING]
+> Try to use a custom `key` as much as possible. Otherwise, you will be dependent on the index and the order of the items in your main Terraform project. In this case, to add new records, it must be at the end of the list, otherwise the uniqueness of the identifier will be broken.
+
 ### Handling Duplicate Record Names
 
 When you have multiple records with the same name (e.g., multiple MX or TXT records at `@`), the module automatically generates unique keys. You can also provide custom keys using the `key` field:
@@ -413,6 +416,7 @@ value = {
 2. **Cloud-enabled Records**: When `cloud = true`, the record is proxied through ArvanCloud's CDN. This is typically used for A, AAAA, CNAME, and ANAME records.
 3. **Load Balancing**: For A and AAAA records with multiple IPs, use `ip_filter_mode` to configure load balancing behavior.
 4. **Record Names**: Use `@` for apex/root domain records.
+5. **Uniqueness**: Try to use a custom `key` as much as possible. Otherwise, you will be dependent on the index and the order of the items in your main Terraform project. In this case, to add new records, it must be at the end of the list, otherwise the uniqueness of the identifier will be broken.
 
 ## License
 
