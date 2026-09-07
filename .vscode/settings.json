@@ -1,16 +1,46 @@
 {
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "[terraform-vars]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+  "terraform.languageServer.enable": true,
   "cSpell.words": [
     "adkim",
     "aname",
+    "arvancloud",
     "aspf",
     "autodiscover",
+    "chdir",
+    "cidrhost",
     "DMARC",
     "domainkey",
+    "hashicorp",
     "hostnames",
     "iodef",
     "issuewild",
     "letsencrypt",
+    "markdownlint",
+    "tfplan",
+    "tflint",
+    "tfsec",
+    "tfvars",
     "tlsa",
-    "xmpp"
+    "trivy",
+    "xmpp",
+    "yamllint"
   ]
 }
