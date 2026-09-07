@@ -1,5 +1,4 @@
 locals {
-  # Default values for optional configurations
   default_ip_filter_mode = {
     count      = "single"
     order      = "none"
@@ -9,15 +8,30 @@ locals {
   default_upstream_https = "default"
   default_ttl            = 120
 
-  # Create indexed records list with unique keys
-  # Key format: {name}_{type}_{index} to handle duplicates
+  # CDN proxy is on by default for traffic records, off for mail/security records.
+  default_cloud = {
+    a     = true
+    aaaa  = true
+    aname = true
+    caa   = false
+    cname = true
+    dkim  = false
+    mx    = false
+    ns    = false
+    ptr   = false
+    spf   = false
+    srv   = false
+    tlsa  = false
+    txt   = false
+  }
+
+  # Key format: {name}_{type}_{index} unless the record sets an explicit key.
   indexed_records = [
     for idx, record in var.records : merge(record, {
-      unique_key = record.key != null ? record.key : "${record.name}_${record.type}_${idx}"
+      unique_key = coalesce(record.key, "${record.name}_${record.type}_${idx}")
     })
   ]
 
-  # Categorize records by type for efficient processing (using unique keys)
   a_records     = { for record in local.indexed_records : record.unique_key => record if record.type == "a" }
   aaaa_records  = { for record in local.indexed_records : record.unique_key => record if record.type == "aaaa" }
   aname_records = { for record in local.indexed_records : record.unique_key => record if record.type == "aname" }
@@ -42,7 +56,7 @@ resource "arvancloud_cdn_domain_dns_record" "a_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, true)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.a)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "a"
 
@@ -69,7 +83,7 @@ resource "arvancloud_cdn_domain_dns_record" "aaaa_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, true)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.aaaa)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "aaaa"
 
@@ -96,7 +110,7 @@ resource "arvancloud_cdn_domain_dns_record" "aname_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, true)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.aname)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "aname"
 
@@ -120,7 +134,7 @@ resource "arvancloud_cdn_domain_dns_record" "caa_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.caa)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "caa"
 
@@ -143,7 +157,7 @@ resource "arvancloud_cdn_domain_dns_record" "cname_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, true)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.cname)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "cname"
 
@@ -167,7 +181,7 @@ resource "arvancloud_cdn_domain_dns_record" "dkim_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.dkim)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "dkim"
 
@@ -189,7 +203,7 @@ resource "arvancloud_cdn_domain_dns_record" "mx_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.mx)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "mx"
 
@@ -212,7 +226,7 @@ resource "arvancloud_cdn_domain_dns_record" "ns_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.ns)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "ns"
 
@@ -234,7 +248,7 @@ resource "arvancloud_cdn_domain_dns_record" "ptr_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.ptr)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "ptr"
 
@@ -256,7 +270,7 @@ resource "arvancloud_cdn_domain_dns_record" "spf_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.spf)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "spf"
 
@@ -278,7 +292,7 @@ resource "arvancloud_cdn_domain_dns_record" "srv_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.srv)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "srv"
 
@@ -303,7 +317,7 @@ resource "arvancloud_cdn_domain_dns_record" "tlsa_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.tlsa)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "tlsa"
 
@@ -328,7 +342,7 @@ resource "arvancloud_cdn_domain_dns_record" "txt_records" {
   domain         = var.domain
   name           = each.value.name
   ttl            = coalesce(each.value.ttl, local.default_ttl)
-  cloud          = coalesce(each.value.cloud, false)
+  cloud          = coalesce(each.value.cloud, local.default_cloud.txt)
   upstream_https = coalesce(each.value.upstream_https, local.default_upstream_https)
   type           = "txt"
 

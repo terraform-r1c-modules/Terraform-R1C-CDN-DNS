@@ -1,3 +1,8 @@
+output "domain" {
+  description = "The ArvanCloud CDN domain these DNS records belong to."
+  value       = var.domain
+}
+
 # =============================================================================
 # Record IDs by Type
 # =============================================================================
@@ -184,20 +189,6 @@ output "record_count" {
     srv   = length(arvancloud_cdn_domain_dns_record.srv_records)
     tlsa  = length(arvancloud_cdn_domain_dns_record.tlsa_records)
     txt   = length(arvancloud_cdn_domain_dns_record.txt_records)
-    total = (
-      length(arvancloud_cdn_domain_dns_record.a_records) +
-      length(arvancloud_cdn_domain_dns_record.aaaa_records) +
-      length(arvancloud_cdn_domain_dns_record.aname_records) +
-      length(arvancloud_cdn_domain_dns_record.caa_records) +
-      length(arvancloud_cdn_domain_dns_record.cname_records) +
-      length(arvancloud_cdn_domain_dns_record.dkim_records) +
-      length(arvancloud_cdn_domain_dns_record.mx_records) +
-      length(arvancloud_cdn_domain_dns_record.ns_records) +
-      length(arvancloud_cdn_domain_dns_record.ptr_records) +
-      length(arvancloud_cdn_domain_dns_record.spf_records) +
-      length(arvancloud_cdn_domain_dns_record.srv_records) +
-      length(arvancloud_cdn_domain_dns_record.tlsa_records) +
-      length(arvancloud_cdn_domain_dns_record.txt_records)
-    )
+    total = length(var.records)
   }
 }

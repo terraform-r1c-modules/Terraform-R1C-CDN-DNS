@@ -3,11 +3,12 @@
 # =============================================================================
 
 variable "domain" {
-  description = "The domain name (UUID or name) for the DNS zone."
+  description = "Existing ArvanCloud CDN domain (name or UUID) whose DNS records this module manages."
   type        = string
+  nullable    = false
 
   validation {
-    condition     = length(var.domain) > 0
+    condition     = length(trimspace(var.domain)) > 0
     error_message = "Domain name cannot be empty."
   }
 }
@@ -18,10 +19,15 @@ variable "domain" {
 
 variable "records" {
   description = <<-EOT
-    List of DNS records to create. Each record requires a name and type.
-    Optional fields will use sensible defaults if not provided.
+    List of DNS records to create on the existing domain. Each record requires
+    name, type, and a type-specific value object. Optional fields use the
+    defaults documented in the README.
 
-    Supported record types:
+    Set an explicit `key` on every record (especially duplicates). Auto keys
+    are `{name}_{type}_{index}` — inserting or reordering the list without
+    custom keys recreates resources.
+
+    Supported record types (lowercase):
     - a, aaaa: IP address records (supports multiple IPs with optional port, weight, country)
     - aname: Alias records (requires location, host_header)
     - caa: Certificate Authority Authorization (requires tag, value)
@@ -144,22 +150,43 @@ variable "records" {
     })
   }))
 
-  default = []
+  default  = []
+  nullable = false
 
   validation {
     condition = alltrue([
       for record in var.records :
       contains(["a", "aaaa", "aname", "caa", "cname", "dkim", "mx", "ns", "ptr", "spf", "srv", "tlsa", "txt"], record.type)
     ])
-    error_message = "Record type must be one of: a, aaaa, aname, caa, cname, dkim, mx, ns, ptr, spf, srv, tlsa, txt."
+    error_message = "Record type must be one of: a, aaaa, aname, caa, cname, dkim, mx, ns, ptr, spf, srv, tlsa, txt (lowercase)."
   }
 
   validation {
     condition = alltrue([
       for record in var.records :
-      record.name != null && length(record.name) > 0
+      length(trimspace(record.name)) > 0
     ])
     error_message = "Record name cannot be empty."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.key == null || length(trimspace(record.key)) > 0
+    ])
+    error_message = "Record key, when set, cannot be empty."
+  }
+
+  validation {
+    condition = alltrue([
+      for t in distinct([for r in var.records : r.type]) :
+      length(distinct([
+        for idx, r in var.records : coalesce(r.key, "${r.name}_${r.type}_${idx}") if r.type == t
+        ])) == length([
+        for idx, r in var.records : coalesce(r.key, "${r.name}_${r.type}_${idx}") if r.type == t
+      ])
+    ])
+    error_message = "Record keys must be unique per type. Set an explicit unique `key` on records that share a name, and avoid colliding with auto-generated `{name}_{type}_{index}` keys."
   }
 
   validation {
@@ -190,7 +217,10 @@ variable "records" {
     error_message = "ip_filter_mode values are invalid. count: single|multi, order: none|weighted|rr, geo_filter: none|location|country."
   }
 
-  # Validate A records have valid values
+  # ---------------------------------------------------------------------------
+  # A / AAAA
+  # ---------------------------------------------------------------------------
+
   validation {
     condition = alltrue([
       for record in var.records :
@@ -199,7 +229,6 @@ variable "records" {
     error_message = "A records must have at least one IP address in value.a."
   }
 
-  # Validate AAAA records have valid values
   validation {
     condition = alltrue([
       for record in var.records :
@@ -208,7 +237,26 @@ variable "records" {
     error_message = "AAAA records must have at least one IPv6 address in value.aaaa."
   }
 
-  # Validate port ranges for A/AAAA records
+  validation {
+    condition = alltrue(flatten([
+      for record in var.records : [
+        for ip in coalesce(record.value.a, []) :
+        can(cidrhost("${ip.ip}/32", 0))
+      ] if record.type == "a"
+    ]))
+    error_message = "A record values must be valid IPv4 addresses."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for record in var.records : [
+        for ip in coalesce(record.value.aaaa, []) :
+        can(cidrhost("${ip.ip}/128", 0))
+      ] if record.type == "aaaa"
+    ]))
+    error_message = "AAAA record values must be valid IPv6 addresses."
+  }
+
   validation {
     condition = alltrue(flatten([
       for record in var.records : [
@@ -229,7 +277,6 @@ variable "records" {
     error_message = "Port must be between 1 and 65535 for AAAA records."
   }
 
-  # Validate weight ranges for A/AAAA records
   validation {
     condition = alltrue(flatten([
       for record in var.records : [
@@ -250,39 +297,144 @@ variable "records" {
     error_message = "Weight must be between 0 and 1000 for AAAA records."
   }
 
-  # Validate CAA tag values
-  validation {
-    condition = alltrue([
-      for record in var.records :
-      record.type != "caa" || (
-        record.value.caa != null &&
-        contains(["issue", "issuewild", "iodef"], record.value.caa.tag)
-      )
-    ])
-    error_message = "CAA record tag must be one of: issue, issuewild, iodef."
-  }
+  # ---------------------------------------------------------------------------
+  # CNAME / ANAME
+  # ---------------------------------------------------------------------------
 
-  # Validate CNAME host_header values
   validation {
     condition = alltrue([
       for record in var.records :
       record.type != "cname" || (
         record.value.cname != null &&
-        contains(["source", "dest"], record.value.cname.host_header)
+        endswith(record.value.cname.host, ".") &&
+        contains(["source", "dest"], record.value.cname.host_header) &&
+        (record.value.cname.port == null || (record.value.cname.port >= 1 && record.value.cname.port <= 65535))
       )
     ])
-    error_message = "CNAME record host_header must be one of: source, dest."
+    error_message = "CNAME records require value.cname with a FQDN host ending in '.', host_header of source|dest, and an optional port between 1 and 65535."
   }
 
-  # Validate ANAME host_header values
   validation {
     condition = alltrue([
       for record in var.records :
       record.type != "aname" || (
         record.value.aname != null &&
-        contains(["source", "dest"], record.value.aname.host_header)
+        endswith(record.value.aname.location, ".") &&
+        contains(["source", "dest"], record.value.aname.host_header) &&
+        (record.value.aname.port == null || (record.value.aname.port >= 1 && record.value.aname.port <= 65535))
       )
     ])
-    error_message = "ANAME record host_header must be one of: source, dest."
+    error_message = "ANAME records require value.aname with a FQDN location ending in '.', host_header of source|dest, and an optional port between 1 and 65535."
+  }
+
+  # ---------------------------------------------------------------------------
+  # CAA / DKIM / SPF / TXT
+  # ---------------------------------------------------------------------------
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "caa" || (
+        record.value.caa != null &&
+        contains(["issue", "issuewild", "iodef"], record.value.caa.tag) &&
+        length(trimspace(record.value.caa.value)) > 0
+      )
+    ])
+    error_message = "CAA records require value.caa with tag issue|issuewild|iodef and a non-empty value."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "dkim" || (
+        record.value.dkim != null && length(trimspace(record.value.dkim.text)) > 0
+      )
+    ])
+    error_message = "DKIM records require a non-empty value.dkim.text."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "spf" || (
+        record.value.spf != null && length(trimspace(record.value.spf.text)) > 0
+      )
+    ])
+    error_message = "SPF records require a non-empty value.spf.text."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "txt" || (
+        record.value.txt != null && length(trimspace(record.value.txt.text)) > 0
+      )
+    ])
+    error_message = "TXT records require a non-empty value.txt.text."
+  }
+
+  # ---------------------------------------------------------------------------
+  # MX / NS / PTR / SRV / TLSA
+  # ---------------------------------------------------------------------------
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "mx" || (
+        record.value.mx != null &&
+        endswith(record.value.mx.host, ".") &&
+        record.value.mx.priority >= 0 &&
+        record.value.mx.priority <= 65535
+      )
+    ])
+    error_message = "MX records require value.mx with a FQDN host ending in '.' and priority between 0 and 65535."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "ns" || (
+        record.value.ns != null && endswith(record.value.ns.host, ".")
+      )
+    ])
+    error_message = "NS records require value.ns with a FQDN host ending in '.'."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "ptr" || (
+        record.value.ptr != null && length(trimspace(record.value.ptr.domain)) > 0
+      )
+    ])
+    error_message = "PTR records require a non-empty value.ptr.domain."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "srv" || (
+        record.value.srv != null &&
+        endswith(record.value.srv.target, ".") &&
+        (record.value.srv.port == null || (record.value.srv.port >= 1 && record.value.srv.port <= 65535)) &&
+        (record.value.srv.priority == null || (record.value.srv.priority >= 0 && record.value.srv.priority <= 65535)) &&
+        (record.value.srv.weight == null || (record.value.srv.weight >= 0 && record.value.srv.weight <= 65535))
+      )
+    ])
+    error_message = "SRV records require value.srv with a FQDN target ending in '.', optional port 1-65535, and optional priority/weight 0-65535."
+  }
+
+  validation {
+    condition = alltrue([
+      for record in var.records :
+      record.type != "tlsa" || (
+        record.value.tlsa != null &&
+        contains(["0", "1", "2", "3"], record.value.tlsa.usage) &&
+        contains(["0", "1"], record.value.tlsa.selector) &&
+        contains(["0", "1", "2"], record.value.tlsa.matching_type) &&
+        length(trimspace(record.value.tlsa.certificate)) > 0
+      )
+    ])
+    error_message = "TLSA records require value.tlsa with usage 0-3, selector 0-1, matching_type 0-2, and a non-empty certificate."
   }
 }
