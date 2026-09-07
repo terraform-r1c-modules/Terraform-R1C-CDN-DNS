@@ -1,6 +1,6 @@
 # Contributing to ArvanCloud CDN DNS Terraform Module
 
-First off, thank you for considering contributing to this project! 🎉
+Thank you for considering contributing to this project.
 
 ## Table of Contents
 
@@ -40,20 +40,20 @@ This project and everyone participating in it is governed by our commitment to p
 2. **Clone your fork** locally:
 
    ```bash
-   git clone https://github.com/terraform-r1c-modules/terraform-r1c-cdn-dns.git
-   cd terraform-r1c-cdn-dns
+   git clone https://github.com/terraform-r1c-modules/Terraform-R1C-DNS.git
+   cd Terraform-R1C-DNS
    ```
 
 3. **Add the upstream remote**:
 
    ```bash
-   git remote add upstream https://github.com/terraform-r1c-modules/terraform-r1c-cdn-dns.git
+   git remote add upstream https://github.com/terraform-r1c-modules/Terraform-R1C-DNS.git
    ```
 
 4. **Create a branch** for your changes:
 
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feat/your-feature-name
    ```
 
 ## Development Setup
@@ -67,11 +67,10 @@ This project and everyone participating in it is governed by our commitment to p
 ### Install Development Tools
 
 ```bash
-# Install pre-commit hooks
 pip install pre-commit
-pre-commit install
+make pre-commit-install
 
-# Install TFLint (Linux)
+# TFLint (Linux)
 curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 ```
 
@@ -81,6 +80,7 @@ curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/instal
 terraform version
 tflint --version
 pre-commit --version
+make help
 ```
 
 ## How to Contribute
@@ -100,9 +100,9 @@ pre-commit --version
 
 ### Submitting Code Changes
 
-1. Ensure your changes follow our [style guidelines](#style-guidelines)
-2. Add or update tests as needed
-3. Update documentation
+1. Follow the [style guidelines](#style-guidelines)
+2. Update documentation and examples
+3. Run `make check` (or `make pre-commit`)
 4. Submit a pull request
 
 ## Style Guidelines
@@ -110,25 +110,26 @@ pre-commit --version
 ### Terraform Code Style
 
 - Use `terraform fmt` to format all `.tf` files
-- Use meaningful variable and resource names
+- Use snake_case names
 - Add descriptions to all variables and outputs
-- Use validation blocks for input validation
+- Use validation blocks for inputs
 - Follow [HashiCorp's Terraform style conventions](https://developer.hashicorp.com/terraform/language/syntax/style)
 
 ```hcl
 # Good
-variable "pool_name" {
-  description = "Name of the origin pool"
+variable "domain" {
+  description = "Existing ArvanCloud CDN domain (name or UUID) whose DNS records this module manages."
   type        = string
+  nullable    = false
 
   validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.pool_name))
-    error_message = "Pool name must contain only lowercase letters, numbers, and hyphens."
+    condition     = length(trimspace(var.domain)) > 0
+    error_message = "Domain name cannot be empty."
   }
 }
 
 # Bad
-variable "name" {
+variable "domain" {
   type = string
 }
 ```
@@ -137,22 +138,28 @@ variable "name" {
 
 ```plaintext
 .
-├── main.tf           # Main resources
-├── variables.tf      # Input variables
-├── outputs.tf        # Output values
-├── versions.tf       # Provider and Terraform version constraints
-├── README.md         # Documentation
-└── examples/
-    ├── basic/        # Simple usage example
-    └── advanced/     # Complex usage example
+├── main.tf              # Per-type arvancloud_cdn_domain_dns_record resources
+├── variables.tf         # Module contract
+├── outputs.tf           # Output values
+├── versions.tf          # required_version and required_providers only
+├── Makefile             # Local fmt / validate / lint
+├── README.md            # Usage and schemas
+├── examples/
+│   ├── basic/           # Minimal consumer (provider lives here)
+│   └── advanced/        # All record types
+└── wrappers/            # for_each wrapper for Terragrunt-style maps
 ```
+
+Do not add a `provider "arvancloud"` block or a backend in the module root. Put those in consumer roots (`examples/*`). Keep records in HCL — do not introduce YAML inventories.
 
 ### Naming Conventions
 
-- **Variables**: `snake_case`, descriptive names
-- **Resources**: Use `this` for the primary resource
-- **Locals**: `snake_case`
-- **Outputs**: `snake_case`, match the resource attribute name when possible
+- **Variables / locals / outputs**: `snake_case`
+- **Resources**: `{type}_records` with `for_each` (e.g. `a_records`)
+- **Record types**: lowercase (`a`, `aaaa`, `cname`, …)
+- **Apex name**: `@`
+
+When adding a record type, update `variables.tf` (schema + validations), `main.tf` (local map + resource), `outputs.tf`, `README.md`, and `examples/`. Follow the existing per-type resource pattern.
 
 ## Commit Messages
 
@@ -180,13 +187,13 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ### Examples
 
 ```plaintext
-feat(pool): add support for custom health checks
+feat: add unique key validation for duplicate records
 
-fix: correct region validation regex
+fix: reject CNAME hosts that are not FQDNs
 
-docs: update README with new examples
+docs: document CDN proxy defaults for mail records
 
-chore: update GitHub Actions workflows
+chore: align Makefile targets with local quality gates
 ```
 
 ## Pull Request Process
@@ -201,68 +208,56 @@ chore: update GitHub Actions workflows
 2. **Run validation checks**:
 
    ```bash
-   terraform fmt -check -recursive
-   terraform init
-   terraform validate
-   tflint --recursive
+   make init
+   make check
    ```
 
 3. **Push your changes** and create a pull request
 
 4. **Fill out the PR template** completely
 
-5. **Wait for review** - maintainers will review your PR and may request changes
+5. **Wait for review** — maintainers will review your PR and may request changes
 
 6. **Address feedback** by pushing additional commits
 
 7. Once approved, a maintainer will **merge your PR**
+
+Do not commit `*.tfvars`, `.terraform.lock.hcl`, or state files (all gitignored).
 
 ## Testing
 
 ### Local Testing
 
 ```bash
-# Format check
-terraform fmt -check -recursive
-
-# Initialize
-terraform init
-
-# Validate
-terraform validate
-
-# Lint
-tflint --recursive
-
-# Test with examples
-cd examples/basic
-terraform init
-terraform validate
-terraform plan
+make init
+make check          # fmt-check + validate + lint
+make pre-commit     # all pre-commit hooks
 ```
+
+`make validate` requires `make init` first so each Terraform directory has a `.terraform` folder.
 
 ### Integration Testing
 
-For integration tests with a real ArvanCloud account:
+Example `plan`/`apply` needs `TF_VAR_arvancloud_api_key` and a real test domain. Destroy afterwards.
 
-1. Set up ArvanCloud API credentials
-2. Use a test domain
-3. Run `terraform apply` with the example configurations
-4. Verify resources are created correctly
+1. Set ArvanCloud API credentials
+2. Use a dedicated test domain
+3. Run `terraform apply` from `examples/basic` (see [examples/basic/README.md](examples/basic/README.md))
+4. Verify records in the ArvanCloud panel
 5. Run `terraform destroy` to clean up
 
 ## Documentation
 
 - Update `README.md` for any changes to variables, outputs, or usage
-- Add inline comments for complex logic
 - Update examples to demonstrate new features
+- Keep `CHANGELOG.md` current (Keep a Changelog)
 - Use proper Markdown formatting
 
 ## Questions?
 
-If you have questions, feel free to:
+If you have questions:
 
 - Open a [Question issue](../../issues/new?template=question.yml)
 - Start a [Discussion](../../discussions)
 
-Thank you for contributing! 🙏
+Thank you for contributing.

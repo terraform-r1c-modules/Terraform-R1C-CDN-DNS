@@ -1,10 +1,21 @@
 # ArvanCloud CDN DNS Terraform Module
 
 ![Terraform](https://img.shields.io/badge/Terraform-%3E%3D1.5-623CE4?logo=terraform)
-![Version](https://img.shields.io/github/v/release/terraform-r1c-modules/terraform-r1c-cdn-dns?logo=github&color=red&label=Version)
+![Version](https://img.shields.io/github/v/release/terraform-r1c-modules/Terraform-R1C-DNS?logo=github&color=red&label=Version)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 
-Terraform module to manage ArvanCloud CDN DNS records with support for all record types.
+Reusable Terraform module that manages DNS records on an **existing** ArvanCloud CDN domain. It does not create zones, configure a provider, or own remote state.
+
+## Table of contents
+
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [Notes](#notes)
+- [Development](#development)
+- [License](#license)
 
 ## Requirements
 
@@ -13,30 +24,46 @@ Terraform module to manage ArvanCloud CDN DNS records with support for all recor
 | [terraform](https://developer.hashicorp.com/terraform)                           | >= 1.5   |
 | [arvancloud](https://git.arvancloud.ir/arvancloud/terraform-provider-arvancloud) | >= 0.2.2 |
 
+The ArvanCloud provider is **not** on `registry.terraform.io`. Consumers must declare:
+
+```hcl
+terraform {
+  required_providers {
+    arvancloud = {
+      source  = "terraform.arvancloud.ir/arvancloud/arvancloud"
+      version = ">= 0.2.2"
+    }
+  }
+}
+
+provider "arvancloud" {
+  api_key = var.arvancloud_api_key
+}
+```
+
 ## Usage
 
-### Basic Example
+Pin a release tag rather than `main`. The domain must already exist in ArvanCloud CDN.
 
 ```hcl
 module "cdn_dns" {
-  source = "git@github.com:terraform-r1c-modules/Terraform-R1C-CDN-DNS.git?ref=main"
+  source = "git::https://github.com/terraform-r1c-modules/Terraform-R1C-DNS.git?ref=v1.0.1"
 
   domain = "example.ir"
 
   records = [
-    # Simple A record
     {
       name = "www"
       type = "a"
+      key  = "www-a"
       value = {
         a = [{ ip = "1.2.3.4" }]
       }
     },
-
-    # TXT record for verification
     {
       name = "verification"
       type = "txt"
+      key  = "site-verification"
       value = {
         txt = { text = "verify-domain-12345" }
       }
@@ -45,11 +72,11 @@ module "cdn_dns" {
 }
 ```
 
-### Advanced Example with All Record Types
+### Advanced example with all record types
 
 ```hcl
 module "cdn_dns" {
-  source = "git@github.com:terraform-r1c-modules/Terraform-R1C-CDN-DNS.git?ref=main"
+  source = "git::https://github.com/terraform-r1c-modules/Terraform-R1C-DNS.git?ref=v1.0.1"
 
   domain = "example.ir"
 
@@ -58,6 +85,7 @@ module "cdn_dns" {
     {
       name           = "api"
       type           = "a"
+      key            = "api-a"
       ttl            = 300
       cloud          = true
       upstream_https = "https"
@@ -78,6 +106,7 @@ module "cdn_dns" {
     {
       name = "ipv6"
       type = "aaaa"
+      key  = "ipv6-aaaa"
       value = {
         aaaa = [
           { ip = "2001:db8::1" },
@@ -90,6 +119,7 @@ module "cdn_dns" {
     {
       name  = "cdn"
       type  = "cname"
+      key   = "cdn-cname"
       cloud = true
       value = {
         cname = {
@@ -104,6 +134,7 @@ module "cdn_dns" {
     {
       name = "@"
       type = "aname"
+      key  = "apex-aname"
       value = {
         aname = {
           location    = "origin.example.com."
@@ -116,6 +147,7 @@ module "cdn_dns" {
     {
       name = "mail"
       type = "mx"
+      key  = "mail-mx"
       value = {
         mx = {
           host     = "mail.example.ir."
@@ -128,6 +160,7 @@ module "cdn_dns" {
     {
       name = "@"
       type = "txt"
+      key  = "apex-spf-txt"
       value = {
         txt = { text = "v=spf1 include:_spf.example.com ~all" }
       }
@@ -137,6 +170,7 @@ module "cdn_dns" {
     {
       name = "@"
       type = "spf"
+      key  = "apex-spf"
       value = {
         spf = { text = "v=spf1 include:_spf.example.com ~all" }
       }
@@ -146,6 +180,7 @@ module "cdn_dns" {
     {
       name = "selector._domainkey"
       type = "dkim"
+      key  = "selector-dkim"
       value = {
         dkim = { text = "v=DKIM1; k=rsa; p=MIGfMA0GCSqGS..." }
       }
@@ -155,6 +190,7 @@ module "cdn_dns" {
     {
       name = "@"
       type = "caa"
+      key  = "apex-caa-issue"
       value = {
         caa = {
           tag   = "issue"
@@ -167,6 +203,7 @@ module "cdn_dns" {
     {
       name = "subdomain"
       type = "ns"
+      key  = "subdomain-ns1"
       value = {
         ns = { host = "ns1.example.com." }
       }
@@ -176,6 +213,7 @@ module "cdn_dns" {
     {
       name = "_sip._tcp"
       type = "srv"
+      key  = "sip-srv"
       value = {
         srv = {
           target   = "sip.example.ir."
@@ -190,6 +228,7 @@ module "cdn_dns" {
     {
       name = "_443._tcp.www"
       type = "tlsa"
+      key  = "www-tlsa"
       value = {
         tlsa = {
           usage         = "3"
@@ -204,6 +243,7 @@ module "cdn_dns" {
     {
       name = "4.3.2.1.in-addr.arpa"
       type = "ptr"
+      key  = "ptr-1"
       value = {
         ptr = { domain = "host.example.ir" }
       }
@@ -212,12 +252,20 @@ module "cdn_dns" {
 }
 ```
 
+## Examples
+
+| Directory                              | Description                                                 |
+| -------------------------------------- | ----------------------------------------------------------- |
+| [examples/basic](examples/basic)       | Minimal consumer: A, MX, and TXT records with explicit keys |
+| [examples/advanced](examples/advanced) | All record types, `ip_filter_mode`, and custom keys         |
+| [wrappers](wrappers)                   | `for_each` wrapper for Terragrunt-style maps of domains     |
+
 ## Inputs
 
-| Name      | Description                                     | Type           | Default | Required |
-| --------- | ----------------------------------------------- | -------------- | ------- | :------: |
-| `domain`  | The domain name (UUID or name) for the DNS zone | `string`       | n/a     |   Yes    |
-| `records` | List of DNS records to create                   | `list(object)` | `[]`    |    No    |
+| Name      | Description                                   | Type           | Default | Required |
+| --------- | --------------------------------------------- | -------------- | ------- | :------: |
+| `domain`  | Existing ArvanCloud CDN domain (name or UUID) | `string`       | n/a     |   Yes    |
+| `records` | List of DNS records to create                 | `list(object)` | `[]`    |    No    |
 
 ### Record Object Structure
 
@@ -227,33 +275,32 @@ module "cdn_dns" {
 | `type`           | Record type (a, aaaa, aname, caa, cname, dkim, mx, ns, ptr, spf, srv, tlsa, txt) | `string` | n/a                                              |   Yes    |
 | `key`            | Unique identifier for duplicate name records (auto-generated if not provided)    | `string` | `{name}_{type}_{index}`                          |    No    |
 | `ttl`            | Time to live in seconds (60-86400)                                               | `number` | `120`                                            |    No    |
-| `cloud`          | Whether record is managed by ArvanCloud CDN                                      | `bool`   | `true` for A/AAAA/CNAME/ANAME, `false` otherwise |    No    |
+| `cloud`          | Whether record is proxied through ArvanCloud CDN                                 | `bool`   | `true` for A/AAAA/CNAME/ANAME, `false` otherwise |    No    |
 | `upstream_https` | HTTPS config: default, auto, http, https                                         | `string` | `"default"`                                      |    No    |
 | `ip_filter_mode` | IP filtering configuration                                                       | `object` | See below                                        |    No    |
 | `value`          | Record value object (varies by type)                                             | `object` | n/a                                              |   Yes    |
 
 > [!WARNING]
-> Try to use a custom `key` as much as possible. Otherwise, you will be dependent on the index and the order of the items in your main Terraform project. In this case, to add new records, it must be at the end of the list, otherwise the uniqueness of the identifier will be broken.
+> Always set an explicit `key` on each record (especially duplicates). Auto keys are `{name}_{type}_{index}`. Inserting or reordering the list without custom keys recreates resources.
 
 ### Handling Duplicate Record Names
 
-When you have multiple records with the same name (e.g., multiple MX or TXT records at `@`), the module automatically generates unique keys. You can also provide custom keys using the `key` field:
+When you have multiple records with the same name (e.g., multiple MX or TXT records at `@`), the module generates unique keys per type. Prefer custom keys:
 
 ```hcl
 records = [
-  # Multiple MX records with same name - auto-generated keys
   {
     name = "@"
     type = "mx"
+    key  = "mx-primary"
     value = { mx = { host = "mx1.example.com.", priority = 10 } }
   },
   {
     name = "@"
     type = "mx"
+    key  = "mx-secondary"
     value = { mx = { host = "mx2.example.com.", priority = 20 } }
   },
-
-  # Multiple TXT records with custom keys for better identification
   {
     name = "@"
     type = "txt"
@@ -268,6 +315,8 @@ records = [
   }
 ]
 ```
+
+Keys only need to be unique **within the same record type**. An A record and a TXT record may share a key.
 
 ### IP Filter Mode
 
@@ -285,7 +334,7 @@ records = [
 value = {
   a = [  # or aaaa for IPv6
     {
-      ip      = "1.2.3.4"        # Required
+      ip      = "1.2.3.4"        # Required, valid IPv4 / IPv6
       port    = 443              # Optional (1-65535)
       weight  = 100              # Optional (0-1000)
       country = "IR"             # Optional
@@ -299,9 +348,9 @@ value = {
 ```hcl
 value = {
   cname = {
-    host        = "target.example.com."  # Required, FQDN format
+    host        = "target.example.com."  # Required, FQDN ending with .
     host_header = "source"               # Required: source or dest
-    port        = 443                    # Optional
+    port        = 443                    # Optional (1-65535)
   }
 }
 ```
@@ -311,9 +360,9 @@ value = {
 ```hcl
 value = {
   aname = {
-    location    = "origin.example.com."  # Required, FQDN format
+    location    = "origin.example.com."  # Required, FQDN ending with .
     host_header = "dest"                 # Required: source or dest
-    port        = 443                    # Optional
+    port        = 443                    # Optional (1-65535)
   }
 }
 ```
@@ -323,8 +372,8 @@ value = {
 ```hcl
 value = {
   mx = {
-    host     = "mail.example.com."  # Required, FQDN format
-    priority = 10                   # Required
+    host     = "mail.example.com."  # Required, FQDN ending with .
+    priority = 10                   # Required (0-65535)
   }
 }
 ```
@@ -353,10 +402,10 @@ value = {
 ```hcl
 value = {
   srv = {
-    target   = "service.example.com."  # Required, FQDN format
-    port     = 5060                    # Optional
-    priority = 10                      # Optional
-    weight   = 100                     # Optional
+    target   = "service.example.com."  # Required, FQDN ending with .
+    port     = 5060                    # Optional (1-65535)
+    priority = 10                      # Optional (0-65535)
+    weight   = 100                     # Optional (0-65535)
   }
 }
 ```
@@ -365,7 +414,7 @@ value = {
 
 ```hcl
 value = {
-  ns = { host = "ns1.example.com." }  # FQDN format
+  ns = { host = "ns1.example.com." }  # FQDN ending with .
 }
 ```
 
@@ -382,9 +431,9 @@ value = {
 ```hcl
 value = {
   tlsa = {
-    usage         = "3"           # Required
-    selector      = "1"           # Required
-    matching_type = "1"           # Required
+    usage         = "3"           # Required: 0-3
+    selector      = "1"           # Required: 0-1
+    matching_type = "1"           # Required: 0-2
     certificate   = "abc123..."   # Required
   }
 }
@@ -394,6 +443,7 @@ value = {
 
 | Name             | Description                              |
 | ---------------- | ---------------------------------------- |
+| `domain`         | Domain these records belong to           |
 | `a_records`      | A record details (id, name, type)        |
 | `aaaa_records`   | AAAA record details                      |
 | `aname_records`  | ANAME record details                     |
@@ -412,12 +462,25 @@ value = {
 
 ## Notes
 
-1. **FQDN Format**: For CNAME, ANAME, MX, NS, and SRV records, hostnames must end with a dot (e.g., `example.com.`)
-2. **Cloud-enabled Records**: When `cloud = true`, the record is proxied through ArvanCloud's CDN. This is typically used for A, AAAA, CNAME, and ANAME records.
-3. **Load Balancing**: For A and AAAA records with multiple IPs, use `ip_filter_mode` to configure load balancing behavior.
-4. **Record Names**: Use `@` for apex/root domain records.
-5. **Uniqueness**: Try to use a custom `key` as much as possible. Otherwise, you will be dependent on the index and the order of the items in your main Terraform project. In this case, to add new records, it must be at the end of the list, otherwise the uniqueness of the identifier will be broken.
+1. **Existing domain**: This module only manages records. Create the CDN domain (and provider/backend) in the consuming root module.
+2. **FQDN format**: CNAME `host`, ANAME `location`, MX/NS `host`, and SRV `target` must end with a dot (e.g. `example.com.`).
+3. **Cloud-enabled records**: `cloud = true` proxies the record through ArvanCloud CDN. That default applies to A, AAAA, CNAME, and ANAME only. Leave mail and security records (MX, TXT, SPF, DKIM, CAA, TLSA, SRV, NS, PTR) unproxied.
+4. **Load balancing**: For A and AAAA records with multiple IPs, use `ip_filter_mode` to configure load balancing.
+5. **Record names**: Use `@` for apex/root domain records.
+6. **Record types** are lowercase (`a`, not `A`).
+7. **Version pinning**: Pin the module `?ref=` to a release tag in production.
+
+## Development
+
+Local checks are the quality gate (there is no CI pipeline):
+
+```bash
+make check          # fmt-check, validate, lint
+make pre-commit     # all pre-commit hooks
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and [examples/basic/README.md](examples/basic/README.md) for apply/destroy against a test domain.
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details
+Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
