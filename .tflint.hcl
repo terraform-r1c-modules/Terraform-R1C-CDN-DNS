@@ -15,6 +15,11 @@ plugin "terraform" {
   preset  = "recommended"
 }
 
+# Pin module sources (examples use relative paths, which are allowed)
+rule "terraform_module_pinned_source" {
+  enabled = true
+}
+
 # Naming convention rules
 rule "terraform_naming_convention" {
   enabled = true
