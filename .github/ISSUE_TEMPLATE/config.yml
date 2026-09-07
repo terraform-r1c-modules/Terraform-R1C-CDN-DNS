@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📖 Documentation
-    url: https://github.com/terraform-r1c-modules/terraform-r1c-cdn-dns#readme
+    url: https://github.com/terraform-r1c-modules/Terraform-R1C-DNS#readme
     about: Check the documentation before opening an issue
   - name: 📚 ArvanCloud Documentation
     url: https://docs.arvancloud.ir/en/cdn/dns-records/

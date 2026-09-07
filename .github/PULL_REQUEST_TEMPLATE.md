@@ -30,10 +30,10 @@ Fixes # (issue)
 
 ### Terraform Specific
 
-- [ ] I have run `terraform fmt` to format the code
-- [ ] I have run `terraform validate` to validate the configuration
+- [ ] I have run `make check` (`fmt-check`, `validate`, `lint`)
 - [ ] I have updated the `README.md` with any new variables/outputs
 - [ ] I have added/updated examples if applicable
+- [ ] I have updated `CHANGELOG.md` if this change is user-facing
 - [ ] I have tested the changes with a real ArvanCloud account (if applicable)
 
 ## Screenshots (if applicable)

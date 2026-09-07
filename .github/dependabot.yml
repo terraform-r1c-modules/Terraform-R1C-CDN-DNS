@@ -1,7 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "terraform"
-    directory: "/"
+    directories:
+      - "/"
+      - "/examples/basic"
+      - "/examples/advanced"
+      - "/wrappers"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -13,6 +17,4 @@ updates:
     labels:
       - "dependencies"
       - "terraform"
-    reviewers:
-      - "hatamiarash7"
     open-pull-requests-limit: 5

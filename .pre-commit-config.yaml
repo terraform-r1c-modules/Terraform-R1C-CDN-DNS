@@ -1,14 +1,8 @@
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.104.0
+    rev: v1.109.1
     hooks:
       - id: terraform_fmt
-      - id: terraform_wrapper_module_for_each
-        args:
-          - --args=--module-dir=.
-          - --args=--module-repo-org=terraform-r1c-modules
-          - --args=--module-repo-provider=r1c
-          - --args=--module-repo-shortname=dns
       - id: terraform_tflint
         args:
           - "--args=--only=terraform_deprecated_interpolation"
@@ -29,5 +23,21 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-case-conflict
+      - id: check-added-large-files
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
       - id: end-of-file-fixer
       - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+      - id: markdownlint
