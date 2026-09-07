@@ -6,23 +6,37 @@
 
 Reusable Terraform module that manages DNS records on an **existing** ArvanCloud CDN domain. It does not create zones, configure a provider, or own remote state.
 
-## Table of contents
-
-- [Requirements](#requirements)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Inputs](#inputs)
-- [Outputs](#outputs)
-- [Notes](#notes)
-- [Development](#development)
-- [License](#license)
+- [ArvanCloud CDN DNS Terraform Module](#arvancloud-cdn-dns-terraform-module)
+  - [Requirements](#requirements)
+  - [Usage](#usage)
+    - [Advanced example with all record types](#advanced-example-with-all-record-types)
+  - [Examples](#examples)
+  - [Inputs](#inputs)
+    - [Record Object Structure](#record-object-structure)
+    - [Handling Duplicate Record Names](#handling-duplicate-record-names)
+    - [IP Filter Mode](#ip-filter-mode)
+    - [Record Value Types](#record-value-types)
+      - [A / AAAA Records](#a--aaaa-records)
+      - [CNAME Record](#cname-record)
+      - [ANAME Record](#aname-record)
+      - [MX Record](#mx-record)
+      - [TXT / SPF / DKIM Records](#txt--spf--dkim-records)
+      - [CAA Record](#caa-record)
+      - [SRV Record](#srv-record)
+      - [NS Record](#ns-record)
+      - [PTR Record](#ptr-record)
+      - [TLSA Record](#tlsa-record)
+  - [Outputs](#outputs)
+  - [Notes](#notes)
+  - [Development](#development)
+  - [License](#license)
 
 ## Requirements
 
-| Name                                                                             | Version  |
-| -------------------------------------------------------------------------------- | -------- |
-| [terraform](https://developer.hashicorp.com/terraform)                           | >= 1.5   |
-| [arvancloud](https://git.arvancloud.ir/arvancloud/terraform-provider-arvancloud) | >= 0.2.2 |
+| Name                                                                                      | Version  |
+| ----------------------------------------------------------------------------------------- | -------- |
+| [Terraform](https://developer.hashicorp.com/terraform)                                    | >= 1.5   |
+| [Arvancloud Provider](https://git.arvancloud.ir/arvancloud/terraform-provider-arvancloud) | >= 0.2.2 |
 
 The ArvanCloud provider is **not** on `registry.terraform.io`. Consumers must declare:
 
