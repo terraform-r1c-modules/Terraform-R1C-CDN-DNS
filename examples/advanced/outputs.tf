@@ -2,6 +2,11 @@
 # Outputs
 # =============================================================================
 
+output "domain" {
+  description = "Domain managed by the DNS module"
+  value       = module.dns.domain
+}
+
 output "all_record_ids" {
   description = "All DNS record IDs organized by type"
   value       = module.dns.all_record_ids

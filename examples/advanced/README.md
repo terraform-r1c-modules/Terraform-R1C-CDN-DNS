@@ -1,12 +1,14 @@
 # Advanced Example
 
-This example demonstrates advanced usage of the ArvanCloud DNS module with all record types, load balancing, and comprehensive configurations.
+Advanced consumer of the ArvanCloud CDN DNS module: all record types, load balancing, `ip_filter_mode`, and custom keys.
+
+The domain must already exist in ArvanCloud CDN. This example does not create a zone.
 
 ## What This Example Creates
 
 ### A Records
 
-- Root domain with weighted load balancing across 2 servers
+- Apex with weighted load balancing across 2 servers
 - API subdomain with round-robin load balancing
 - Monitoring subdomains (Grafana, Prometheus)
 
@@ -23,7 +25,7 @@ This example demonstrates advanced usage of the ArvanCloud DNS module with all r
 
 ### ANAME Records
 
-- Apex alias for root domain
+- Apex alias for a hostname
 
 ### MX Records
 
@@ -78,38 +80,46 @@ This example demonstrates advanced usage of the ArvanCloud DNS module with all r
 
 1. Set your API key:
 
-```bash
-export TF_VAR_arvancloud_api_key="your-api-key"
-```
+   ```bash
+   export TF_VAR_arvancloud_api_key="your-api-key"
+   ```
 
-1. Customize variables (optional):
+2. Customize variables (optional):
 
-```bash
-# Create a terraform.tfvars file
-cat > terraform.tfvars << EOF
-domain = "example.ir"
-EOF
-```
+   ```bash
+   cat > terraform.tfvars << EOF
+   domain = "example.ir"
+   EOF
+   ```
 
-1. Initialize and apply:
+3. Initialize, plan, and apply against a **test** domain:
 
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+4. Destroy when finished:
+
+   ```bash
+   terraform destroy
+   ```
+
+Do not commit `terraform.tfvars`, lock files, or state.
 
 ## Inputs
 
-| Name               | Description        | Type     | Default        |
-| ------------------ | ------------------ | -------- | -------------- |
-| arvancloud_api_key | ArvanCloud API key | `string` | n/a            |
-| domain             | The domain name    | `string` | `"example.ir"` |
+| Name               | Description                              | Type     | Default        |
+| ------------------ | ---------------------------------------- | -------- | -------------- |
+| arvancloud_api_key | ArvanCloud API key                       | `string` | n/a            |
+| domain             | Existing CDN domain to manage records on | `string` | `"example.ir"` |
 
 ## Outputs
 
 | Name           | Description                                  |
 | -------------- | -------------------------------------------- |
+| domain         | Domain managed by the module                 |
 | all_record_ids | Map of all DNS record IDs organized by type  |
 | record_count   | Count of DNS records by type including total |
 | a_records      | A record details                             |
@@ -125,10 +135,11 @@ To customize this example for your infrastructure:
 2. Modify email settings (MX, SPF, DKIM, DMARC) for your mail provider
 3. Adjust TTL values based on your caching requirements
 4. Add or remove records as needed
+5. Keep explicit `key` values on records that share a name and type
 
 ## Notes
 
 - Records with `cloud = true` are proxied through ArvanCloud CDN
-- Records with `cloud = false` are DNS-only (no CDN proxy)
-- FQDN values must end with a dot (e.g., `example.ir.`)
-- Multiple records with the same name require unique `key` values
+- Records with `cloud = false` are DNS-only (no CDN proxy). Leave mail and security records unproxied.
+- FQDN values for CNAME, ANAME, MX, NS, and SRV must end with a dot (e.g. `example.ir.`)
+- Multiple records with the same name and type require unique `key` values

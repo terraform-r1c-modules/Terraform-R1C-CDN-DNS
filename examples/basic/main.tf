@@ -32,6 +32,7 @@ module "dns" {
     {
       name  = "@"
       type  = "a"
+      key   = "apex-a"
       cloud = true
       value = {
         a = [{ ip = "1.2.3.4" }]
@@ -42,6 +43,7 @@ module "dns" {
     {
       name  = "www"
       type  = "a"
+      key   = "www-a"
       cloud = true
       value = {
         a = [{ ip = "1.2.3.4" }]
@@ -52,6 +54,7 @@ module "dns" {
     {
       name  = "api"
       type  = "a"
+      key   = "api-a"
       cloud = true
       value = {
         a = [{ ip = "1.2.3.5" }]
@@ -62,6 +65,7 @@ module "dns" {
     {
       name  = "@"
       type  = "mx"
+      key   = "apex-mx"
       cloud = false
       value = {
         mx = { host = "mail.example.com.", priority = 10 }
